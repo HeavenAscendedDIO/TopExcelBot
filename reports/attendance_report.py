@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def build_attendance_report(df: pd.DataFrame) -> str:
+def build_attendance_report(df: pd.DataFrame) -> list[str]:
     df = df[['ФИО преподавателя', 'Средняя посещаемость']].dropna()
 
     # Приводим посещаемость к числу
@@ -17,16 +17,16 @@ def build_attendance_report(df: pd.DataFrame) -> str:
         errors='coerce'
     )
 
-    # Убираем строки, где не удалось преобразовать
     df = df.dropna(subset=['Средняя посещаемость'])
 
     low_attendance = df[df['Средняя посещаемость'] < 40]
 
     if low_attendance.empty:
-        return "✅ Преподавателей с посещаемостью ниже 40% не найдено"
+        return []
 
-    result = "🚨 *Посещаемость ниже 40%*\n\n"
+    result = []
+
     for _, row in low_attendance.iterrows():
-        result += f"• {row['ФИО преподавателя']} — {row['Средняя посещаемость']}%\n"
+        result.append(f"{row['ФИО преподавателя']} — {row['Средняя посещаемость']}%")
 
     return result
