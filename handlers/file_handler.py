@@ -5,6 +5,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.universal_report_sender import send_report_with_preview
 from reports.attendance_report import build_attendance_report
 from reports.lesson_topics_report import build_lesson_topics_report
+from reports.students_report import build_students_report
 
 user_files = {}
 
@@ -73,14 +74,24 @@ def register(bot):
 
         # Выбор отчёта
         if call.data == "topics":
-            invalid_topics = build_lesson_topics_report(df)
+            items = build_lesson_topics_report(df)
             send_report_with_preview(
                 bot=bot,
                 chat_id=chat_id,
                 title="🚨 <b>Неверный формат тем уроков</b>",
-                items=invalid_topics,
+                items=items,
                 empty_message="✅ <b>Все темы уроков соответствуют формату</b>",
                 filename_prefix="invalid_lesson_topics"
+            )
+        elif call.data == "students":
+            items = build_students_report(df)
+            send_report_with_preview(
+                bot=bot,
+                chat_id=chat_id,
+                title="🚨 <b>Проблемные студенты</b>",
+                items=items,
+                empty_message="✅ <b>Студентов с критическими показателями не найдено</b>",
+                filename_prefix="problem_students"
             )
         elif call.data == "attendance":
             items = build_attendance_report(df)
