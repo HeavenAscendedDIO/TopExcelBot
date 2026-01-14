@@ -7,6 +7,7 @@ from reports.attendance_report import build_attendance_report
 from reports.lesson_topics_report import build_lesson_topics_report
 from reports.students_report import build_students_report
 from reports.homework_submit_report import build_homework_submit_report
+from reports.schedule_report import build_schedule_report
 
 user_files = {}
 
@@ -78,7 +79,17 @@ def register(bot):
             return
 
         # Выбор отчёта
-        if call.data == "topics":
+        if call.data == "schedule":
+            items = build_schedule_report(df)
+            send_report_with_preview(
+                bot=bot,
+                chat_id=chat_id,
+                title="📖 <b>Отчёт по расписанию</b>",
+                items=items,
+                empty_message="❌ <b>Не удалось найти дисциплины в файле</b>",
+                filename_prefix="schedule_report"
+            )
+        elif call.data == "topics":
             items = build_lesson_topics_report(df)
             send_report_with_preview(
                 bot=bot,
