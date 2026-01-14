@@ -6,6 +6,7 @@ from utils.universal_report_sender import send_report_with_preview
 from reports.attendance_report import build_attendance_report
 from reports.lesson_topics_report import build_lesson_topics_report
 from reports.students_report import build_students_report
+from reports.homework_submit_report import build_homework_submit_report
 
 user_files = {}
 
@@ -33,7 +34,11 @@ def register(bot):
     @bot.message_handler(content_types=["document"])
     def handle_document(message):
         if not message.document.file_name.endswith((".xls", ".xlsx")):
-            bot.send_message(message.chat.id, "❌ <b>Пожалуйста, отправь Excel-файл", parse_mode='HTML')
+            bot.send_message(
+                message.chat.id,
+                "❌ <b>Неверный формат файла!\nПожалуйста, отправь Excel-файл</b>",
+                parse_mode='HTML'
+            )
             return
 
         file_info = bot.get_file(message.document.file_id)
@@ -102,6 +107,16 @@ def register(bot):
                 items=items,
                 empty_message="✅ <b>Преподавателей с посещаемостью ниже 40% не найдено</b>",
                 filename_prefix="low_attendance"
+            )
+        elif call.data == "homework_submit":
+            items = build_homework_submit_report(df)
+            send_report_with_preview(
+                bot=bot,
+                chat_id=chat_id,
+                title="🚨 <b>Низкий процент сдачи домашних заданий</b>",
+                items=items,
+                empty_message="✅ <b>Студентов с низким процентом сдачи домашних заданий не найдено</b>",
+                filename_prefix="low_homework_submit"
             )
         else:
             bot.send_message(chat_id, "❌ <b>Неизвестный тип отчёта</b>", parse_mode='HTML')
