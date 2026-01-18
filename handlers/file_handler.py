@@ -8,6 +8,7 @@ from reports.lesson_topics_report import build_lesson_topics_report
 from reports.students_report import build_students_report
 from reports.homework_submit_report import build_homework_submit_report
 from reports.schedule_report import build_schedule_report
+from reports.homework_check_report import build_homework_check_report
 
 user_files = {}
 
@@ -118,6 +119,19 @@ def register(bot):
                 items=items,
                 empty_message="✅ <b>Преподавателей с посещаемостью ниже 40% не найдено</b>",
                 filename_prefix="low_attendance"
+            )
+        elif call.data == "homework_check":
+            # Читаем таблицу как Multiindex
+            df_homework_check = pd.read_excel(user_files[chat_id], header=[0, 1])
+
+            items = build_homework_check_report(df_homework_check)
+            send_report_with_preview(
+                bot=bot,
+                chat_id=chat_id,
+                title="🚨 <b>Проверка ДЗ меньше 70%</b>",
+                items=items,
+                empty_message="✅ <b>Все преподаватели проверяют ДЗ вовремя</b>",
+                filename_prefix="low_homework_check"
             )
         elif call.data == "homework_submit":
             items = build_homework_submit_report(df)
