@@ -1,7 +1,12 @@
 import pandas as pd
 import re
 
+
 def build_lesson_topics_report(df: pd.DataFrame) -> list[str]:
+    # Проверка на наличия колонки в таблице
+    if 'Тема урока' not in df.columns:
+        raise ValueError("Тема урока")
+
     pattern = re.compile(r"^Урок\s*№?\s*\d+\.\s*Тема:\s*.+", re.IGNORECASE)
 
     invalid_topics = []

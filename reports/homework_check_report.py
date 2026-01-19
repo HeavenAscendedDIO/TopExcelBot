@@ -2,6 +2,27 @@ import pandas as pd
 
 
 def build_homework_check_report(df: pd.DataFrame) -> list[str]:
+    required_columns = [
+        ('Месяц', 'Получено'),
+        ('Месяц', 'Проверено'),
+        ('Неделя', 'Получено'),
+        ('Неделя', 'Проверено')
+    ]
+
+    # Проверяем наличие колонок
+    missing_columns = [
+        f"{col[0]} - {col[1]}"
+        for col in required_columns
+        if col not in df.columns
+    ]
+
+    # Проверяем, есть ли 'ФИО преподавателя' в верхнем уровне заголовков
+    if 'ФИО преподавателя' not in df.columns.get_level_values(0):
+        missing_columns.append("ФИО преподавателя")
+
+    if missing_columns:
+        raise ValueError(", ".join(missing_columns))
+
     result = []
 
     for _, row in df.iterrows():
