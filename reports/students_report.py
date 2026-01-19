@@ -2,6 +2,15 @@ import pandas as pd
 
 
 def build_students_report(df: pd.DataFrame) -> list[str]:
+    required_columns = {'FIO', 'Группа', 'Homework', 'Classroom'}
+
+    # Проверяем, каких колонок не хватает в файле
+    missing_columns = required_columns - set(df.columns)
+
+    # Если есть недостающие колонки, выбрасываем ошибку с их списком
+    if missing_columns:
+        raise ValueError(f"{', '.join(missing_columns)}")
+
     df = df[['FIO', 'Группа', 'Homework', 'Classroom']].dropna()
 
     problem_students = df[

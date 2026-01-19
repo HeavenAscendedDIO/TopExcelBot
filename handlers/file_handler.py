@@ -80,70 +80,82 @@ def register(bot):
             return
 
         # Выбор отчёта
-        if call.data == "schedule":
-            items = build_schedule_report(df)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="📖 <b>Отчёт по расписанию</b>",
-                items=items,
-                empty_message="❌ <b>Не удалось найти дисциплины в файле</b>",
-                filename_prefix="schedule_report"
-            )
-        elif call.data == "topics":
-            items = build_lesson_topics_report(df)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="🚨 <b>Неверный формат тем уроков</b>",
-                items=items,
-                empty_message="✅ <b>Все темы уроков соответствуют формату</b>",
-                filename_prefix="invalid_lesson_topics"
-            )
-        elif call.data == "students":
-            items = build_students_report(df)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="🚨 <b>Проблемные студенты</b>",
-                items=items,
-                empty_message="✅ <b>Студентов с критическими показателями не найдено</b>",
-                filename_prefix="problem_students"
-            )
-        elif call.data == "attendance":
-            items = build_attendance_report(df)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="🚨 <b>Посещаемость ниже 40%</b>",
-                items=items,
-                empty_message="✅ <b>Преподавателей с посещаемостью ниже 40% не найдено</b>",
-                filename_prefix="low_attendance"
-            )
-        elif call.data == "homework_check":
-            # Читаем таблицу как Multiindex
-            df_homework_check = pd.read_excel(user_files[chat_id], header=[0, 1])
+        try:
+            if call.data == "schedule":
+                items = build_schedule_report(df)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="📖 <b>Отчёт по расписанию</b>",
+                    items=items,
+                    empty_message="❌ <b>Не удалось найти дисциплины в файле</b>",
+                    filename_prefix="schedule_report"
+                )
+            elif call.data == "topics":
+                items = build_lesson_topics_report(df)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="🚨 <b>Неверный формат тем уроков</b>",
+                    items=items,
+                    empty_message="✅ <b>Все темы уроков соответствуют формату</b>",
+                    filename_prefix="invalid_lesson_topics"
+                )
+            elif call.data == "students":
+                items = build_students_report(df)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="🚨 <b>Проблемные студенты</b>",
+                    items=items,
+                    empty_message="✅ <b>Студентов с критическими показателями не найдено</b>",
+                    filename_prefix="problem_students"
+                )
+            elif call.data == "attendance":
+                items = build_attendance_report(df)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="🚨 <b>Посещаемость ниже 40%</b>",
+                    items=items,
+                    empty_message="✅ <b>Преподавателей с посещаемостью ниже 40% не найдено</b>",
+                    filename_prefix="low_attendance"
+                )
+            elif call.data == "homework_check":
+                # Читаем таблицу как Multiindex
+                df_homework_check = pd.read_excel(user_files[chat_id], header=[0, 1])
 
-            items = build_homework_check_report(df_homework_check)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="🚨 <b>Проверка ДЗ меньше 70%</b>",
-                items=items,
-                empty_message="✅ <b>Все преподаватели проверяют ДЗ вовремя</b>",
-                filename_prefix="low_homework_check"
+                items = build_homework_check_report(df_homework_check)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="🚨 <b>Проверка ДЗ меньше 70%</b>",
+                    items=items,
+                    empty_message="✅ <b>Все преподаватели проверяют ДЗ вовремя</b>",
+                    filename_prefix="low_homework_check"
+                )
+            elif call.data == "homework_submit":
+                items = build_homework_submit_report(df)
+                send_report_with_preview(
+                    bot=bot,
+                    chat_id=chat_id,
+                    title="🚨 <b>Низкий процент сдачи домашних заданий</b>",
+                    items=items,
+                    empty_message="✅ <b>Студентов с низким процентом сдачи домашних заданий не найдено</b>",
+                    filename_prefix="low_homework_submit"
+                )
+            else:
+                bot.send_message(chat_id, "❌ <b>Неизвестный тип отчёта</b>", parse_mode='HTML')
+
+        except ValueError as e:
+            bot.send_message(
+                chat_id,
+                f"❌ <b>В таблице не найдены ожидаемые колонки:</b> <code>{e}</code>\n\n"
+                f"Возможно, вы выбрали не тот отчёт или загрузили неверный файл",
+                parse_mode='HTML'
             )
-        elif call.data == "homework_submit":
-            items = build_homework_submit_report(df)
-            send_report_with_preview(
-                bot=bot,
-                chat_id=chat_id,
-                title="🚨 <b>Низкий процент сдачи домашних заданий</b>",
-                items=items,
-                empty_message="✅ <b>Студентов с низким процентом сдачи домашних заданий не найдено</b>",
-                filename_prefix="low_homework_submit"
-            )
-        else:
-            bot.send_message(chat_id, "❌ <b>Неизвестный тип отчёта</b>", parse_mode='HTML')
+        except Exception as e:
+            # Ловим остальные непредвиденные ошибки
+            bot.send_message(chat_id, f"❌ Произошла ошибка при формировании отчёта:\n{e}")
 
         bot.answer_callback_query(call.id)

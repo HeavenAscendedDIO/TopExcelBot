@@ -2,6 +2,15 @@ import pandas as pd
 
 
 def build_attendance_report(df: pd.DataFrame) -> list[str]:
+    required_columns = {'ФИО преподавателя', 'Средняя посещаемость'}
+
+    # Проверяем, каких колонок не хватает в файле
+    missing_columns = required_columns - set(df.columns)
+
+    # Если есть недостающие колонки, выбрасываем ошибку с их списком
+    if missing_columns:
+        raise ValueError(f"{', '.join(missing_columns)}")
+
     df = df[['ФИО преподавателя', 'Средняя посещаемость']].dropna()
 
     # Приводим посещаемость к числу
