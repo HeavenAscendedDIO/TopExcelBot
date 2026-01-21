@@ -10,14 +10,20 @@ from reports.homework_submit_report import build_homework_submit_report
 from reports.schedule_report import build_schedule_report
 from reports.homework_check_report import build_homework_check_report
 
+# Словарь для хранения путей к файлам пользователей
 user_files = {}
 
+# Папка для сохранения загруженных файлов
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # Меню выбора отчёта
 def get_report_keyboard():
+    """
+    Создает инлайн-клавиатуру с кнопками для выбора типа отчёта.
+    Каждая кнопка содержит callback_data, который обрабатывается в handle_callback.
+    """
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         InlineKeyboardButton("📓 Расписание групп", callback_data="schedule"),
@@ -31,10 +37,16 @@ def get_report_keyboard():
 
 
 def register(bot):
+    """
+    Регистрация обработчиков сообщений и callback-запросов.
+    """
 
-    # Приём Excel-файла
     @bot.message_handler(content_types=["document"])
     def handle_document(message):
+        """
+        Принимает документ от пользователя, проверяет формат,
+        сохраняет файл на диск и предлагает меню выбора отчёта.
+        """
         if not message.document.file_name.endswith((".xls", ".xlsx")):
             bot.send_message(
                 message.chat.id,
@@ -43,17 +55,21 @@ def register(bot):
             )
             return
 
+        # Получение информации о файле и скачивание
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
 
+        # Формирование пути для сохранения
         file_path = os.path.join(
             UPLOAD_DIR,
             f"{message.chat.id}_{message.document.file_name}"
         )
 
+        # Запись файла на диск
         with open(file_path, "wb") as f:
             f.write(downloaded_file)
 
+        # Сохранение пути в глобальный словарь (связываем пользователя и файл)
         user_files[message.chat.id] = file_path
 
         bot.send_message(
@@ -63,24 +79,33 @@ def register(bot):
             parse_mode='HTML'
         )
 
-    # Обработка кнопок
     @bot.callback_query_handler(func=lambda call: True)
     def handle_callback(call):
+        """
+        Обрабатывает нажатия на кнопки меню.
+        Генерирует соответствующий отчёт и отправляет результат.
+        """
         chat_id = call.message.chat.id
 
+        # Проверка: загрузил ли пользователь файл перед нажатием кнопки
         if chat_id not in user_files:
             bot.answer_callback_query(call.id, "❌ Сначала отправь Excel-файл")
             return
 
-        # Чтение файла
+        # Чтение файла в Pandas DataFrame
         try:
             df = pd.read_excel(user_files[chat_id])
         except Exception as e:
-            bot.send_message(chat_id, f"❌ Ошибка чтения файла:\n{e}")
+            bot.send_message(
+                chat_id,
+                f"❌ <b>Ошибка чтения файла:</b>\n{e}",
+                parse_mode='HTML'
+            )
             return
 
         # Выбор отчёта
         try:
+            # === Расписание ===
             if call.data == "schedule":
                 items = build_schedule_report(df)
                 send_report_with_preview(
@@ -91,6 +116,7 @@ def register(bot):
                     empty_message="❌ <b>Не удалось найти дисциплины в файле</b>",
                     filename_prefix="schedule_report"
                 )
+            # === Темы уроков ===
             elif call.data == "topics":
                 items = build_lesson_topics_report(df)
                 send_report_with_preview(
@@ -101,6 +127,7 @@ def register(bot):
                     empty_message="✅ <b>Все темы уроков соответствуют формату</b>",
                     filename_prefix="invalid_lesson_topics"
                 )
+            # === Проблемные студенты ===
             elif call.data == "students":
                 items = build_students_report(df)
                 send_report_with_preview(
@@ -111,6 +138,7 @@ def register(bot):
                     empty_message="✅ <b>Студентов с критическими показателями не найдено</b>",
                     filename_prefix="problem_students"
                 )
+            # === Посещаемость ===
             elif call.data == "attendance":
                 items = build_attendance_report(df)
                 send_report_with_preview(
@@ -121,8 +149,9 @@ def register(bot):
                     empty_message="✅ <b>Преподавателей с посещаемостью ниже 40% не найдено</b>",
                     filename_prefix="low_attendance"
                 )
+            # === Проверка ДЗ ===
             elif call.data == "homework_check":
-                # Читаем таблицу как Multiindex
+                # Для этого отчета нужно читать файл с двухуровневой шапкой (header=[0, 1])
                 df_homework_check = pd.read_excel(user_files[chat_id], header=[0, 1])
 
                 items = build_homework_check_report(df_homework_check)
@@ -134,6 +163,7 @@ def register(bot):
                     empty_message="✅ <b>Все преподаватели проверяют ДЗ вовремя</b>",
                     filename_prefix="low_homework_check"
                 )
+            # === Сдача ДЗ ===
             elif call.data == "homework_submit":
                 items = build_homework_submit_report(df)
                 send_report_with_preview(
@@ -147,6 +177,7 @@ def register(bot):
             else:
                 bot.send_message(chat_id, "❌ <b>Неизвестный тип отчёта</b>", parse_mode='HTML')
 
+        # Обработка ошибки валидации колонок (если пользователь выбрал не тот отчёт)
         except ValueError as e:
             bot.send_message(
                 chat_id,
@@ -154,8 +185,12 @@ def register(bot):
                 f"Возможно, вы выбрали не тот отчёт или загрузили неверный файл",
                 parse_mode='HTML'
             )
+        # Ловим остальные непредвиденные ошибки
         except Exception as e:
-            # Ловим остальные непредвиденные ошибки
-            bot.send_message(chat_id, f"❌ Произошла ошибка при формировании отчёта:\n{e}")
+            bot.send_message(
+                chat_id,
+                f"❌ <b>Произошла ошибка при формировании отчёта:</b>\n{e}",
+                parse_mode='HTML'
+            )
 
         bot.answer_callback_query(call.id)

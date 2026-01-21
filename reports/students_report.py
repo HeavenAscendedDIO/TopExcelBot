@@ -25,7 +25,7 @@ def build_students_report(df: pd.DataFrame) -> list[str]:
 
     for _, row in problem_students.iterrows():
         result.append(
-            f"{row['FIO']} — " f"{row['Группа']}\n"
+            f"👨🏻‍🎓 {row['FIO']} — " f"{row['Группа']}\n"
             f"📚 Домашняя работа: {row['Homework']}\n"
             f"🏫 Классная работа: {row['Classroom']}\n"
         )

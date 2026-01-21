@@ -59,7 +59,7 @@ def build_homework_check_report(df: pd.DataFrame) -> list[str]:
 
         if lines:
             result.append(
-                fio + "\n" + "\n".join(lines) + "\n"
+                "👨🏻‍🎓 " + fio + "\n" + "\n".join(lines) + "\n"
             )
 
     return result

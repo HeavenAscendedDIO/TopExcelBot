@@ -22,7 +22,7 @@ def build_homework_submit_report(df: pd.DataFrame) -> list[str]:
 
     for _, row in low_homework_submit.iterrows():
         result.append(
-            f"{row['FIO']} — " f"{row['Группа']}\n"
+            f"👨🏻‍🎓 {row['FIO']} — " f"{row['Группа']}\n"
             f"📚 Процент сданных домашних заданий: {row['Percentage Homework']}%\n"
         )
 

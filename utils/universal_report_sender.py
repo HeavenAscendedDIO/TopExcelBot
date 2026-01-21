@@ -2,7 +2,10 @@ import os
 from typing import List
 from telebot import TeleBot
 
+# Максимальное кол-во записей в одном сообщении
 MAX_PREVIEW = 20
+
+# Папка для хранения отчётов
 REPORTS_DIR = "reports_output"
 
 os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -24,7 +27,7 @@ def send_report_with_preview(
     """
 
     if not items:
-        bot.send_message(chat_id, empty_message)
+        bot.send_message(chat_id, empty_message, parse_mode='HTML')
         return
 
     preview = items[:MAX_PREVIEW]
@@ -35,6 +38,7 @@ def send_report_with_preview(
     for item in preview:
         message += f"• {item}\n"
 
+    # Если в отчёте больше 20 записей, готовим отправку файла
     if len(items) > MAX_PREVIEW:
         message += "\n📎 <b>Полный список прикреплён файлом</b> 👇"
 
@@ -46,7 +50,7 @@ def send_report_with_preview(
             REPORTS_DIR,
             f"{filename_prefix}_{chat_id}.txt"
         )
-
+        # Запись данных в файл
         with open(file_path, "w", encoding="utf-8") as f:
             for item in items:
                 f.write(item + "\n")

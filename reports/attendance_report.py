@@ -36,6 +36,6 @@ def build_attendance_report(df: pd.DataFrame) -> list[str]:
     result = []
 
     for _, row in low_attendance.iterrows():
-        result.append(f"{row['ФИО преподавателя']} — {row['Средняя посещаемость']}%")
+        result.append(f"👨🏻‍🏫 {row['ФИО преподавателя']} — {row['Средняя посещаемость']}%")
 
     return result

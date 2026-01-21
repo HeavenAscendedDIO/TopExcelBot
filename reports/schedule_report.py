@@ -6,9 +6,12 @@ def build_schedule_report(df: pd.DataFrame) -> list[str]:
     subject_counter: dict[str, int] = {}
 
     for column in df.columns:
+        # Пропускаем технические колонки (время, аудитория и т.д.),
+        # чтобы случайно не захватить лишний текст
         if any(key in column for key in ("Время", "Группа", "Пара")):
             continue
 
+        # Перебираем все непустые ячейки в текущей колонке
         for cell in df[column].dropna():
             if not isinstance(cell, str):
                 continue
@@ -16,6 +19,7 @@ def build_schedule_report(df: pd.DataFrame) -> list[str]:
             if "Предмет:" not in cell:
                 continue
 
+            # Извлекаем название предмета регулярным выражением
             match = re.search(r"Предмет:\s*(.+)", cell)
             if not match:
                 continue
@@ -26,6 +30,7 @@ def build_schedule_report(df: pd.DataFrame) -> list[str]:
     if not subject_counter:
         return []
 
+    # Функция для правильного склонения слова "пара" (1 пара, 2 пары, 5 пар)
     def pare_word(num: int) -> str:
         if num % 10 == 1 and num % 100 != 11:
             return "пара"
@@ -38,6 +43,6 @@ def build_schedule_report(df: pd.DataFrame) -> list[str]:
 
     for subject, count in subject_counter.items():
         word = pare_word(count)
-        result.append(f"{subject} — <b>{count} {word}</b>\n")
+        result.append(f"📋 {subject} — <b>{count} {word}</b>\n")
 
     return result
